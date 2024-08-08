@@ -1,3 +1,6 @@
+-- Define a global variable to control the script
+_G.espEnabled = true
+
 local settings = {
    defaultcolor = Color3.fromRGB(255,0,0),
    teamcheck = false,
@@ -16,7 +19,6 @@ local round = function(...) local a = {}; for i,v in next, table.pack(...) do a[
 local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return newVector2(a.X, a.Y), b, a.Z end
 
 local espCache = {}
-local enabled = true  -- Variable to check if the script is enabled
 
 local function createEsp(player)
    local drawings = {}
@@ -48,7 +50,7 @@ local function removeEsp(player)
 end
 
 local function updateEsp(player, esp)
-   if not enabled then return end  -- Exit if script is disabled
+   if not _G.espEnabled then return end  -- Exit if the script is disabled
 
    local character = player and player.Character
    if character then
@@ -90,7 +92,7 @@ players.PlayerRemoving:Connect(function(player)
 end)
 
 runService:BindToRenderStep("esp", Enum.RenderPriority.Camera.Value, function()
-   if not enabled then return end  -- Exit if script is disabled
+   if not _G.espEnabled then return end  -- Exit if the script is disabled
 
    for player, drawings in next, espCache do
        if settings.teamcheck and player.Team == localPlayer.Team then
