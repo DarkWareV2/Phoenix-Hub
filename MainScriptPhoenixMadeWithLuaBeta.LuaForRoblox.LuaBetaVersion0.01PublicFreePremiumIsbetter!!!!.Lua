@@ -3,7 +3,7 @@ local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shle
 
 -- Create the main window
 local Window = OrionLib:MakeWindow({
-    Name = "Phoenix Hub Version 0.10 Beta Testing Private", 
+    Name = "Phoenix Hub Version 0.12 Beta Testing Private", 
     HidePremium = false, 
     SaveConfig = true, 
     ConfigFolder = "OrionTest"
