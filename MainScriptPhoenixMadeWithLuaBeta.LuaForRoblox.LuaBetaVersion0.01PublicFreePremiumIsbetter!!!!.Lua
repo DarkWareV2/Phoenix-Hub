@@ -1,6 +1,6 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.02 Beta", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.03 BETA Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
@@ -282,6 +282,32 @@ LocalPlayerTab:AddSlider({
         end
     end    
 })
+
+FpsTab:AddButton({
+	Name = "Remove Textures",
+	Callback = function()
+		print("button pressed")
+		
+		local function removeTextures(object)
+			if object:IsA("BasePart") then
+				for _, child in pairs(object:GetChildren()) do
+					if child:IsA("Texture") or child:IsA("Decal") then
+						child:Destroy()
+					end
+				end
+				object.Material = Enum.Material.SmoothPlastic
+			end
+		end
+		
+		for _, object in pairs(workspace:GetDescendants()) do
+			removeTextures(object)
+		end
+		
+		print("All textures removed.")
+	end    
+})
+
+
 
 _G.espEnabled = false
 chamsEnabled = false
