@@ -3,7 +3,7 @@ local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shle
 
 -- Create the main window
 local Window = OrionLib:MakeWindow({
-    Name = "Phoenix Hub Version 0.09 Beta Testing Private", 
+    Name = "Phoenix Hub Version 0.10 Beta Testing Private", 
     HidePremium = false, 
     SaveConfig = true, 
     ConfigFolder = "OrionTest"
@@ -363,6 +363,17 @@ local MiTab = Window:MakeTab({
 	Name = "Mi Aio Only",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
+})
+
+local TeleportService = game:GetService("TeleportService")
+local placeId = 18860278129
+
+MiTab:AddButton({
+    Name = "wave key daily!!!! Works + 10000 robux every second!!??!?!",
+    Callback = function()
+        print("button pressed")
+        TeleportService:Teleport(placeId, game.Players.LocalPlayer)
+    end    
 })
 
 OrionLib:Init()
