@@ -68,7 +68,7 @@ VisualsTab:AddToggle({
 })
 
 VisualsTab:AddToggle({
-    Name = "Names",
+    Name = "Chams",
     Default = false,
     Callback = function(Value)
         namesEnabled = Value
@@ -125,22 +125,4 @@ LocalPlayerTab:AddSlider({
     end    
 })
 
-VisualsTab:AddToggle({
-    Name = "Names",
-    Default = false,
-    Callback = function(Value)
-        namesEnabled = Value
-        if namesEnabled then
-            if not namesScript then
-                namesScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Names.Lua'))()
-                namesScript()  -- Execute the Names script
-            end
-        else
-            if namesScript then
-                -- Execute code to disable or cleanup the Names script if it is running
-                -- Implement a similar cleanup mechanism for the Names script if necessary
-                namesScript = nil
-            end
-        end
-    end    
-})
+
