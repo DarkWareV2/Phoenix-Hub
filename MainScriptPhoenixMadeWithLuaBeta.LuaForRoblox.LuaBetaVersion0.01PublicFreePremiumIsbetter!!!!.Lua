@@ -1,6 +1,6 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.03 BETA Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.04 BETA Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
@@ -42,6 +42,7 @@ local Section = infoTab:AddSection({
     Name = "Visuals Info"
 })
 
+-- ESP Configuration
 local espEnabled = false
 local chamsEnabled = false
 local espCache = {}
@@ -167,6 +168,7 @@ VisualsTab:AddToggle({
     end
 })
 
+-- Chams Configuration
 VisualsTab:AddToggle({
     Name = "Chams",
     Default = false,
@@ -245,14 +247,13 @@ VisualsTab:AddToggle({
     end    
 })
 
-infoTab:AddLabel("Esp Toggle Off Bugs A Little, Fix Soon")
-
+-- Slider for Walk Speed
 LocalPlayerTab:AddSlider({
     Name = "Walk Speed",
     Min = 0,
     Max = 300,
     Default = 16,
-    Color = Color3.fromRGB(255,255,255),
+    Color = Color3.fromRGB(255, 255, 255),
     Increment = 1,
     ValueName = "Speed",
     Callback = function(Value)
@@ -265,12 +266,13 @@ LocalPlayerTab:AddSlider({
     end    
 })
 
+-- Slider for Jump Power
 LocalPlayerTab:AddSlider({
     Name = "Jump Power",
     Min = 0,
     Max = 300,
     Default = (game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower) or 50,
-    Color = Color3.fromRGB(255,255,255),
+    Color = Color3.fromRGB(255, 255, 255),
     Increment = 1,
     ValueName = "Power",
     Callback = function(Value)
@@ -283,31 +285,85 @@ LocalPlayerTab:AddSlider({
     end    
 })
 
+-- Button to Remove Textures
 FpsTab:AddButton({
-	Name = "Remove Textures",
-	Callback = function()
-		print("button pressed")
-		
-		local function removeTextures(object)
-			if object:IsA("BasePart") then
-				for _, child in pairs(object:GetChildren()) do
-					if child:IsA("Texture") or child:IsA("Decal") then
-						child:Destroy()
-					end
-				end
-				object.Material = Enum.Material.SmoothPlastic
-			end
-		end
-		
-		for _, object in pairs(workspace:GetDescendants()) do
-			removeTextures(object)
-		end
-		
-		print("All textures removed.")
-	end    
+    Name = "Remove Textures",
+    Callback = function()
+        print("button pressed")
+
+        local function removeTextures(object)
+            if object:IsA("BasePart") then
+                for _, child in pairs(object:GetChildren()) do
+                    if child:IsA("Texture") or child:IsA("Decal") then
+                        child:Destroy()
+                    end
+                end
+                object.Material = Enum.Material.SmoothPlastic
+            end
+        end
+
+        for _, object in pairs(workspace:GetDescendants()) do
+            removeTextures(object)
+        end
+
+        print("All textures removed.")
+    end    
 })
 
+-- Flying Toggle
+local flying = false
+local bodyVelocity, bodyGyro
 
+local function startFlying()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local camera = workspace.CurrentCamera
+    local userInputService = game:GetService("UserInputService")
 
+    bodyVelocity = Instance.new("BodyVelocity", humanoidRootPart)
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+
+    bodyGyro = Instance.new("BodyGyro", humanoidRootPart)
+    bodyGyro.CFrame = humanoidRootPart.CFrame
+    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+
+    local function updateFlying()
+        if flying then
+            local direction = (camera.CFrame.LookVector * (userInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0)) * flySpeed
+            bodyVelocity.Velocity = direction
+            bodyGyro.CFrame = CFrame.new(humanoidRootPart.Position, camera.CFrame.Position)
+        end
+    end
+
+    local connection
+    connection = game:GetService("RunService").RenderStepped:Connect(function()
+        if flying then
+            updateFlying()
+        else
+            connection:Disconnect()
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+    end)
+end
+
+LocalPlayerTab:AddToggle({
+    Name = "Fly",
+    Default = false,
+    Callback = function(Value)
+        flying = Value
+        if flying then
+            startFlying()
+        else
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if bodyGyro then bodyGyro:Destroy() end
+        end
+        print("Fly toggled:", Value)
+    end    
+})
+
+-- Initial setup
 _G.espEnabled = false
 chamsEnabled = false
