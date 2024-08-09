@@ -2,7 +2,12 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
 -- Create the main window
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.07 Beta Testing Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({
+    Name = "Phoenix Hub Version 0.08 Beta Testing Private", 
+    HidePremium = false, 
+    SaveConfig = true, 
+    ConfigFolder = "OrionTest"
+})
 
 -- Visuals Tab
 local VisualsTab = Window:MakeTab({
@@ -120,221 +125,90 @@ VisualsTab:AddToggle({
                     if cframe and visible then
                         local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
                         local width, height = round(4 * scaleFactor, 5 * scaleFactor)
-                        local x, y = round(position.X, position.Y)
 
-                        esp.box.Size = newVector2(width, height)
-                        esp.box.Position = newVector2(round(x - width / 2, y - height / 2))
-                        esp.box.Color = settings.teamcolor and player.TeamColor.Color or settings.defaultcolor
+                        esp.box.Size = UDim2.new(0, width, 0, height)
+                        esp.box.Position = UDim2.new(0, position.X - width / 2, 0, position.Y - height / 2)
 
-                        esp.boxoutline.Size = esp.box.Size
-                        esp.boxoutline.Position = esp.box.Position
+                        esp.boxoutline.Size = UDim2.new(0, width + 2, 0, height + 2)
+                        esp.boxoutline.Position = UDim2.new(0, position.X - (width + 2) / 2, 0, position.Y - (height + 2) / 2)
                     end
-                else
-                    esp.box.Visible = false
-                    esp.boxoutline.Visible = false
                 end
             end
 
-            for _, player in next, players:GetPlayers() do
-                if player ~= localPlayer then
-                    createEsp(player)
+            runService.RenderStepped:Connect(function()
+                for _, player in next, players:GetPlayers() do
+                    if player ~= localPlayer and player.Character then
+                        local esp = espCache[player]
+                        if esp then
+                            updateEsp(player, esp)
+                        end
+                    end
                 end
-            end
+            end)
 
             players.PlayerAdded:Connect(function(player)
-                createEsp(player)
+                if espEnabled then
+                    createEsp(player)
+                end
             end)
 
             players.PlayerRemoving:Connect(function(player)
                 removeEsp(player)
             end)
-
-            runService:BindToRenderStep("esp", Enum.RenderPriority.Camera.Value, function()
-                if not _G.espEnabled then return end
-
-                for player, drawings in next, espCache do
-                    if settings.teamcheck and player.Team == localPlayer.Team then
-                        continue
-                    end
-
-                    if drawings and player ~= localPlayer then
-                        updateEsp(player, drawings)
-                    end
-                end
-            end)
         else
-            game:GetService("RunService"):UnbindFromRenderStep("esp")
-            for player, drawings in next, espCache do
-                for _, drawing in next, drawings do
-                    drawing:Remove()
-                end
+            for player, esp in next, espCache do
+                removeEsp(player)
             end
-            espCache = {}
         end
     end
 })
 
--- Chams Configuration
-VisualsTab:AddToggle({
-    Name = "Chams",
-    Default = false,
-    Callback = function(Value)
-        chamsEnabled = Value
-        if chamsEnabled then
-            local color = BrickColor.new(50, 0, 250)
-            local transparency = 0.8
-
-            local Players = game:GetService("Players")
-
-            local function applyChams(character)
-                for _, part in pairs(character:GetChildren()) do
-                    if part:IsA("BasePart") and not part:FindFirstChild("ChamAdornment") then
-                        local adornment = Instance.new("BoxHandleAdornment")
-                        adornment.Name = "ChamAdornment"
-                        adornment.Size = part.Size
-                        adornment.Color = color
-                        adornment.Transparency = transparency
-                        adornment.AlwaysOnTop = true
-                        adornment.Adornee = part
-                        adornment.Parent = part
-                    end
-                end
-            end
-
-            local function onCharacterAdded(character)
-                if character ~= Players.LocalPlayer.Character then
-                    applyChams(character)
-                end
-            end
-
-            local function onPlayerAdded(player)
-                if player.Character then
-                    onCharacterAdded(player.Character)
-                end
-                player.CharacterAdded:Connect(onCharacterAdded)
-            end
-
-            for _, player in pairs(Players:GetPlayers()) do
-                onPlayerAdded(player)
-            end
-
-            Players.PlayerAdded:Connect(onPlayerAdded)
-        else
-            local Players = game:GetService("Players")
-
-            local function removeChams(character)
-                for _, part in pairs(character:GetChildren()) do
-                    if part:IsA("BasePart") then
-                        local adornment = part:FindFirstChild("ChamAdornment")
-                        if adornment then
-                            adornment:Destroy()
-                        end
-                    end
-                end
-            end
-
-            local function onCharacterAdded(character)
-                removeChams(character)
-            end
-
-            local function onPlayerAdded(player)
-                if player.Character then
-                    onCharacterAdded(player.Character)
-                end
-                player.CharacterAdded:Connect(onCharacterAdded)
-            end
-
-            for _, player in pairs(Players:GetPlayers()) do
-                onPlayerAdded(player)
-            end
-
-            Players.PlayerAdded:Connect(onPlayerAdded)
-        end
-    end    
-})
-
--- FPS Button
-FpsTab:AddButton({
-    Name = "Remove Textures",
-    Callback = function()
-        print("button pressed")
-        
-        local function removeTextures(object)
-            if object:IsA("BasePart") then
-                for _, child in pairs(object:GetChildren()) do
-                    if child:IsA("Texture") or child:IsA("Decal") then
-                        child:Destroy()
-                    end
-                end
-                object.Material = Enum.Material.SmoothPlastic
-            end
-        end
-        
-        for _, object in pairs(workspace:GetDescendants()) do
-            removeTextures(object)
-        end
-        
-        print("All textures removed.")
-    end    
-})
-
--- Fly Toggle
+-- Fly Script (Updated to include toggle and version)
 local flying = false
 local flySpeed = 50
-local bodyGyro, bodyVelocity
 
-local function startFlying()
+local function fly()
     local character = game.Players.LocalPlayer.Character
-    if not character then return end
+    local humanoid = character:WaitForChild("Humanoid")
+    local torso = character:WaitForChild("HumanoidRootPart")
 
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local gyro = Instance.new("BodyGyro")
+    gyro.P = 9e4
+    gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    gyro.Parent = torso
 
-    -- Create BodyGyro and BodyVelocity instances
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.Parent = humanoidRootPart
-    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
-    bodyGyro.CFrame = humanoidRootPart.CFrame
+    local velocity = Instance.new("BodyVelocity")
+    velocity.velocity = Vector3.new(0, 0, 0)
+    velocity.P = 9e4
+    velocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    velocity.Parent = torso
 
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Parent = humanoidRootPart
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    while flying do
+        velocity.velocity = (torso.CFrame.LookVector * flySpeed)
+        wait()
+    end
 
-    -- Update flying mechanics
-    game:GetService("RunService").RenderStepped:Connect(function()
-        if flying then
-            local camera = workspace.CurrentCamera
-            local moveDirection = (camera.CFrame.LookVector * flySpeed) + (camera.CFrame.RightVector * flySpeed)
-            bodyVelocity.Velocity = moveDirection
-            bodyGyro.CFrame = camera.CFrame
-        end
-    end)
+    gyro:Destroy()
+    velocity:Destroy()
 end
 
-local function stopFlying()
-    if bodyGyro then bodyGyro:Destroy() end
-    if bodyVelocity then bodyVelocity:Destroy() end
-end
+local UserInputService = game:GetService("UserInputService")
+local toggle = false
 
-LocalPlayerTab:AddToggle({
-    Name = "Fly",
-    Default = false,
-    Callback = function(Value)
-        flying = Value
-        if flying then
-            startFlying()
+UserInputService.InputBegan:Connect(function(inputObject)
+    if inputObject.KeyCode == Enum.KeyCode.RightShift then
+        if toggle then
+            flying = false
+            toggle = false
         else
-            stopFlying()
+            flying = true
+            toggle = true
+            fly()
         end
-    end    
-})
+    end
+end)
 
--- Notifications
-OrionLib:MakeNotification({
-    Name = "Phoenix Hub Loaded",
-    Content = "Welcome to Phoenix Hub! All features have been loaded successfully.",
-    Image = "rbxassetid://4483345998",
-    Time = 5
-})
+-- Add a label to indicate "1% of the time fly bugs"
+infoTab:AddLabel("1% of the time fly bugs")
 
--- End of Script
+OrionLib:Init()
