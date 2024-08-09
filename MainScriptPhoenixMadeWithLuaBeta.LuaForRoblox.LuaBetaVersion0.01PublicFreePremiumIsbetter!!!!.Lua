@@ -55,20 +55,16 @@ VisualsTab:AddToggle({
         if espEnabled then
             if not espScript then
                 espScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Esp.lua'))()
-                espScript()  -- Execute the ESP script
+                espScript()
             end
         else
             if espScript then
-                -- Execute code to disable the ESP script if it is running
                 loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopEsp.lua'))()
                 espScript = nil
             end
         end
     end    
 })
-
-local namesEnabled = false
-local namesScript = nil
 
 VisualsTab:AddToggle({
     Name = "Chams",
@@ -78,26 +74,11 @@ VisualsTab:AddToggle({
         if namesEnabled then
             if not namesScript then
                 namesScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Names.Lua'))()
-                namesScript()  -- Execute the Names script
+                namesScript()
             end
         else
             if namesScript then
-                -- Clean up the ESP markers
-                local function removeESP()
-                    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-                        if player.Character then
-                            for _, part in pairs(player.Character:GetChildren()) do
-                                if part:IsA("Part") or part:IsA("MeshPart") then
-                                    local adornment = part:FindFirstChild("shit")
-                                    if adornment then
-                                        adornment:Destroy()
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-                removeESP()
+
                 namesScript = nil
             end
         end
@@ -141,5 +122,4 @@ LocalPlayerTab:AddSlider({
         end
     end    
 })
-
 
