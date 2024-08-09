@@ -359,5 +359,10 @@ infoSection:AddLabel("Phoenix Hub - Version 0.08")
 infoSection:AddLabel("Chams, ESP, Fly, and FPS Boost features included.")
 infoSection:AddLabel("Use the GUI to toggle and configure functionalities.")
 
--- Finalize Window
+local MiTab = Window:MakeTab({
+	Name = "Mi Aio Only",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
 OrionLib:Init()
