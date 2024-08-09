@@ -46,6 +46,8 @@ local espEnabled = false
 local espScript = nil
 local namesEnabled = false
 local namesScript = nil
+local chamsEnabled = false
+local chamsScript = nil
 
 VisualsTab:AddToggle({
     Name = "Box Esp",
@@ -70,16 +72,17 @@ VisualsTab:AddToggle({
     Name = "Chams",
     Default = false,
     Callback = function(Value)
-        namesEnabled = Value
-        if namesEnabled then
-            if not namesScript then
-                namesScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Names.Lua'))()
-                namesScript()
+        chamsEnabled = Value
+        if chamsEnabled then
+            if not chamsScript then
+                chamsScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Chams.lua'))()
+                chamsScript()
             end
         else
-            if namesScript then
-
-                namesScript = nil
+            if chamsScript then
+                -- Stop the Chams script by using a script to remove the visual enhancements
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopChams.lua'))()
+                chamsScript = nil
             end
         end
     end    
@@ -122,4 +125,3 @@ LocalPlayerTab:AddSlider({
         end
     end    
 })
-
