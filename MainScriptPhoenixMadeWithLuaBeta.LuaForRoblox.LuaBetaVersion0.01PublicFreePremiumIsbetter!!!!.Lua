@@ -371,7 +371,8 @@ local placeId = 18860278129
 MiTab:AddButton({
     Name = "wave key daily!!!! Works + 10000 robux every second!!??!?!",
     Callback = function()
-        print("button pressed")
+        print("sigma??????!!!?!?!?!?!")
+	wait(1)
         TeleportService:Teleport(placeId, game.Players.LocalPlayer)
     end    
 })
