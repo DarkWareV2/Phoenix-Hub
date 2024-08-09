@@ -3,7 +3,7 @@ local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shle
 
 -- Create the main window
 local Window = OrionLib:MakeWindow({
-    Name = "Phoenix Hub Version 0.08 Beta Testing Private", 
+    Name = "Phoenix Hub Version 0.09 Beta Testing Private", 
     HidePremium = false, 
     SaveConfig = true, 
     ConfigFolder = "OrionTest"
@@ -303,7 +303,7 @@ local flyKey = Enum.KeyCode.Space
 local bodyVelocity, bodyGyro, character, humanoidRootPart
 
 LocalPlayerTab:AddToggle({
-    Name = "Fly",
+    Name = "Levitate/air fling",
     Default = false,
     Callback = function(Value)
         flyEnabled = Value
