@@ -54,7 +54,6 @@ VisualsTab:AddToggle({
         _G.espEnabled = Value
 
         if espEnabled then
-            -- Enable Box ESP
             local settings = {
                 defaultcolor = Color3.fromRGB(255, 0, 0),
                 teamcheck = false,
@@ -102,7 +101,7 @@ VisualsTab:AddToggle({
             end
 
             local function updateEsp(player, esp)
-                if not _G.espEnabled then return end  -- Exit if the script is disabled
+                if not _G.espEnabled then return end
 
                 local character = player and player.Character
                 if character then
@@ -144,7 +143,7 @@ VisualsTab:AddToggle({
             end)
 
             runService:BindToRenderStep("esp", Enum.RenderPriority.Camera.Value, function()
-                if not _G.espEnabled then return end  -- Exit if the script is disabled
+                if not _G.espEnabled then return end
 
                 for player, drawings in next, espCache do
                     if settings.teamcheck and player.Team == localPlayer.Team then
@@ -157,7 +156,6 @@ VisualsTab:AddToggle({
                 end
             end)
         else
-            -- Disable Box ESP
             game:GetService("RunService"):UnbindFromRenderStep("esp")
             for player, drawings in next, espCache do
                 for _, drawing in next, drawings do
@@ -208,15 +206,12 @@ VisualsTab:AddToggle({
                 player.CharacterAdded:Connect(onCharacterAdded)
             end
 
-            -- Apply chams to all current players
             for _, player in pairs(Players:GetPlayers()) do
                 onPlayerAdded(player)
             end
 
-            -- Connect player added event
             Players.PlayerAdded:Connect(onPlayerAdded)
         else
-            -- Stop the Chams
             local Players = game:GetService("Players")
 
             local function removeChams(character)
@@ -241,12 +236,10 @@ VisualsTab:AddToggle({
                 player.CharacterAdded:Connect(onCharacterAdded)
             end
 
-            -- Remove chams from all current players
             for _, player in pairs(Players:GetPlayers()) do
                 onPlayerAdded(player)
             end
 
-            -- Connect player added event
             Players.PlayerAdded:Connect(onPlayerAdded)
         end
     end    
@@ -290,6 +283,5 @@ LocalPlayerTab:AddSlider({
     end    
 })
 
--- Start the script with ESP and Chams disabled
 _G.espEnabled = false
 chamsEnabled = false
