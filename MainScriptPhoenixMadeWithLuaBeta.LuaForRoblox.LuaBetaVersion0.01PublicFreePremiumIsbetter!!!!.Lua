@@ -16,148 +16,124 @@ local VisualsTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-local Section = VisualsTab:AddSection({
+local visualsSection = VisualsTab:AddSection({
     Name = "Visuals Configuration"
 })
 
--- Local Player Tab
-local LocalPlayerTab = Window:MakeTab({
-    Name = "Local Player",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local LocalPlayerSection = LocalPlayerTab:AddSection({
-    Name = "Humanoid"
-})
-
--- FPS Tab
-local FpsTab = Window:MakeTab({
-    Name = "Fps Configuration",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local Section = FpsTab:AddSection({
-    Name = "Fps Boosters"
-})
-
--- Info Tab
-local infoTab = Window:MakeTab({
-    Name = "Info",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local Section = infoTab:AddSection({
-    Name = "Visuals Info"
-})
-
--- ESP Configuration
-local espEnabled = false
+-- Chams (Player ESP)
 local chamsEnabled = false
-local espCache = {}
+local chamsCache = {}
 
 VisualsTab:AddToggle({
-    Name = "Box Esp",
+    Name = "Chams",
     Default = false,
     Callback = function(Value)
-        espEnabled = Value
-        _G.espEnabled = Value
+        chamsEnabled = Value
 
-        if espEnabled then
-            local settings = {
-                defaultcolor = Color3.fromRGB(255, 0, 0),
-                teamcheck = false,
-                teamcolor = true
-            }
-
-            local runService = game:GetService("RunService")
+        if chamsEnabled then
             local players = game:GetService("Players")
+            local runService = game:GetService("RunService")
 
-            local localPlayer = players.LocalPlayer
-            local camera = workspace.CurrentCamera
-
-            local newVector2, newColor3, newDrawing = Vector2.new, Color3.new, Drawing.new
-            local tan, rad = math.tan, math.rad
-            local round = function(...) local a = {}; for i,v in next, table.pack(...) do a[i] = math.round(v); end return unpack(a); end
-            local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return newVector2(a.X, a.Y), b, a.Z end
-
-            local function createEsp(player)
-                local drawings = {}
-                
-                drawings.box = newDrawing("Square")
-                drawings.box.Thickness = 1
-                drawings.box.Filled = false
-                drawings.box.Color = settings.defaultcolor
-                drawings.box.Visible = false
-                drawings.box.ZIndex = 2
-
-                drawings.boxoutline = newDrawing("Square")
-                drawings.boxoutline.Thickness = 3
-                drawings.boxoutline.Filled = false
-                drawings.boxoutline.Color = newColor3()
-                drawings.boxoutline.Visible = false
-                drawings.boxoutline.ZIndex = 1
-
-                espCache[player] = drawings
-            end
-
-            local function removeEsp(player)
-                if rawget(espCache, player) then
-                    for _, drawing in next, espCache[player] do
-                        drawing:Remove()
+            local function createCham(player)
+                if player.Character then
+                    for _, part in pairs(player.Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            local cham = Instance.new("Highlight")
+                            cham.Name = "Cham"
+                            cham.OutlineColor = Color3.fromRGB(255, 0, 0)
+                            cham.FillColor = Color3.fromRGB(255, 0, 0)
+                            cham.Parent = part
+                            chamsCache[player] = cham
+                        end
                     end
-                    espCache[player] = nil
                 end
             end
 
-            local function updateEsp(player, esp)
-                if not _G.espEnabled then return end
-
-                local character = player and player.Character
-                if character then
-                    local cframe = character:GetModelCFrame()
-                    local position, visible, depth = wtvp(cframe.Position)
-                    esp.box.Visible = visible
-                    esp.boxoutline.Visible = visible
-
-                    if cframe and visible then
-                        local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
-                        local width, height = round(4 * scaleFactor, 5 * scaleFactor)
-
-                        esp.box.Size = UDim2.new(0, width, 0, height)
-                        esp.box.Position = UDim2.new(0, position.X - width / 2, 0, position.Y - height / 2)
-
-                        esp.boxoutline.Size = UDim2.new(0, width + 2, 0, height + 2)
-                        esp.boxoutline.Position = UDim2.new(0, position.X - (width + 2) / 2, 0, position.Y - (height + 2) / 2)
-                    end
+            local function removeCham(player)
+                if chamsCache[player] then
+                    chamsCache[player]:Destroy()
+                    chamsCache[player] = nil
                 end
             end
 
             runService.RenderStepped:Connect(function()
                 for _, player in next, players:GetPlayers() do
-                    if player ~= localPlayer and player.Character then
-                        local esp = espCache[player]
-                        if esp then
-                            updateEsp(player, esp)
+                    if player ~= game.Players.LocalPlayer then
+                        if chamsCache[player] then
+                            if not player.Character or not player.Character:FindFirstChildOfClass("Humanoid") then
+                                removeCham(player)
+                            end
+                        else
+                            createCham(player)
                         end
                     end
                 end
             end)
 
             players.PlayerAdded:Connect(function(player)
-                if espEnabled then
-                    createEsp(player)
+                if chamsEnabled then
+                    createCham(player)
                 end
             end)
 
             players.PlayerRemoving:Connect(function(player)
-                removeEsp(player)
+                removeCham(player)
             end)
         else
-            for player, esp in next, espCache do
-                removeEsp(player)
+            for player, cham in next, chamsCache do
+                cham:Destroy()
+            end
+            chamsCache = {}
+        end
+    end
+})
+
+-- FPS Booster
+local fpsBoostEnabled = false
+
+local FpsTab = Window:MakeTab({
+    Name = "Fps Configuration",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local fpsSection = FpsTab:AddSection({
+    Name = "Fps Boosters"
+})
+
+fpsSection:AddToggle({
+    Name = "FPS Booster",
+    Default = false,
+    Callback = function(Value)
+        fpsBoostEnabled = Value
+
+        if fpsBoostEnabled then
+            -- Implement FPS Booster settings
+            game:GetService("RunService"):Set3dRenderingEnabled(true)
+        else
+            game:GetService("RunService"):Set3dRenderingEnabled(false)
+        end
+    end
+})
+
+-- Texture Removal
+local textureRemovalEnabled = false
+
+local texturesSection = VisualsTab:AddSection({
+    Name = "Texture Removal"
+})
+
+texturesSection:AddToggle({
+    Name = "Remove Textures",
+    Default = false,
+    Callback = function(Value)
+        textureRemovalEnabled = Value
+
+        if textureRemovalEnabled then
+            for _, part in pairs(workspace:FindFirstChildOfClass("Model"):GetDescendants()) do
+                if part:IsA("BasePart") and part:FindFirstChild("Texture") then
+                    part.Texture:Destroy()
+                end
             end
         end
     end
@@ -209,6 +185,16 @@ UserInputService.InputBegan:Connect(function(inputObject)
 end)
 
 -- Add a label to indicate "1% of the time fly bugs"
-infoTab:AddLabel("1% of the time fly bugs")
+local infoTab = Window:MakeTab({
+    Name = "Info",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local infoSection = infoTab:AddSection({
+    Name = "Visuals Info"
+})
+
+infoSection:AddLabel("1% of the time fly bugs")
 
 OrionLib:Init()
