@@ -2,7 +2,7 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
 -- Create the main window
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.06 Beta Testing Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.07 Beta Testing Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
 -- Visuals Tab
 local VisualsTab = Window:MakeTab({
@@ -287,24 +287,26 @@ local function startFlying()
     local character = game.Players.LocalPlayer.Character
     if not character then return end
 
-    local humanoid = character:WaitForChild("Humanoid")
-    local torso = character:WaitForChild("HumanoidRootPart")
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
     -- Create BodyGyro and BodyVelocity instances
     bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.Parent = torso
+    bodyGyro.Parent = humanoidRootPart
     bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
-    bodyGyro.CFrame = torso.CFrame
+    bodyGyro.CFrame = humanoidRootPart.CFrame
 
     bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Parent = torso
+    bodyVelocity.Parent = humanoidRootPart
     bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     bodyVelocity.Velocity = Vector3.new(0, 0, 0)
 
+    -- Update flying mechanics
     game:GetService("RunService").RenderStepped:Connect(function()
         if flying then
-            bodyVelocity.Velocity = (workspace.CurrentCamera.CFrame.LookVector * flySpeed) + (workspace.CurrentCamera.CFrame.RightVector * flySpeed)
-            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+            local camera = workspace.CurrentCamera
+            local moveDirection = (camera.CFrame.LookVector * flySpeed) + (camera.CFrame.RightVector * flySpeed)
+            bodyVelocity.Velocity = moveDirection
+            bodyGyro.CFrame = camera.CFrame
         end
     end)
 end
