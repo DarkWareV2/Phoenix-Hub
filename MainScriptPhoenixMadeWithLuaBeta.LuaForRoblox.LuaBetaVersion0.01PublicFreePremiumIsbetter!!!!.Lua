@@ -1,6 +1,6 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.05 BETA Testing Private", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.05 BETA Testing Private", HidePremium = false, SaveConfig = true, ConfigFolder = "PhoenixHub"})
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
