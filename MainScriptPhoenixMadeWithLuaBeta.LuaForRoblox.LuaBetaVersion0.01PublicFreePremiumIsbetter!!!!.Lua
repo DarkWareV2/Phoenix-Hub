@@ -44,10 +44,7 @@ local Section = infoTab:AddSection({
 
 local espEnabled = false
 local espScript = nil
-local namesEnabled = false
-local namesScript = nil
 local chamsEnabled = false
-local chamsScript = nil
 
 VisualsTab:AddToggle({
     Name = "Box Esp",
@@ -74,16 +71,79 @@ VisualsTab:AddToggle({
     Callback = function(Value)
         chamsEnabled = Value
         if chamsEnabled then
-            if not chamsScript then
-                chamsScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Chams.lua'))()
-                chamsScript()
+            local color = BrickColor.new(50, 0, 250)
+            local transparency = 0.8
+
+            local Players = game:GetService("Players")
+
+            local function applyChams(character)
+                for _, part in pairs(character:GetChildren()) do
+                    if part:IsA("BasePart") and not part:FindFirstChild("ChamAdornment") then
+                        local adornment = Instance.new("BoxHandleAdornment")
+                        adornment.Name = "ChamAdornment"
+                        adornment.Size = part.Size
+                        adornment.Color = color
+                        adornment.Transparency = transparency
+                        adornment.AlwaysOnTop = true
+                        adornment.Adornee = part
+                        adornment.Parent = part
+                    end
+                end
             end
+
+            local function onCharacterAdded(character)
+                if character ~= Players.LocalPlayer.Character then
+                    applyChams(character)
+                end
+            end
+
+            local function onPlayerAdded(player)
+                if player.Character then
+                    onCharacterAdded(player.Character)
+                end
+                player.CharacterAdded:Connect(onCharacterAdded)
+            end
+
+            -- Apply chams to all current players
+            for _, player in pairs(Players:GetPlayers()) do
+                onPlayerAdded(player)
+            end
+
+            -- Connect player added event
+            Players.PlayerAdded:Connect(onPlayerAdded)
         else
-            if chamsScript then
-                -- Stop the Chams script by using a script to remove the visual enhancements
-                loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopChams.lua'))()
-                chamsScript = nil
+            -- Stop the Chams
+            local Players = game:GetService("Players")
+
+            local function removeChams(character)
+                for _, part in pairs(character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local adornment = part:FindFirstChild("ChamAdornment")
+                        if adornment then
+                            adornment:Destroy()
+                        end
+                    end
+                end
             end
+
+            local function onCharacterAdded(character)
+                removeChams(character)
+            end
+
+            local function onPlayerAdded(player)
+                if player.Character then
+                    onCharacterAdded(player.Character)
+                end
+                player.CharacterAdded:Connect(onCharacterAdded)
+            end
+
+            -- Remove chams from all current players
+            for _, player in pairs(Players:GetPlayers()) do
+                onPlayerAdded(player)
+            end
+
+            -- Connect player added event
+            Players.PlayerAdded:Connect(onPlayerAdded)
         end
     end    
 })
