@@ -1,6 +1,6 @@
 local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
-local Window = OrionLib:MakeWindow({Name = "Phoenix Hub", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local Window = OrionLib:MakeWindow({Name = "Phoenix Hub Version 0.02 Beta", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
@@ -43,26 +43,130 @@ local Section = infoTab:AddSection({
 })
 
 local espEnabled = false
-local espScript = nil
 local chamsEnabled = false
+local espCache = {}
 
 VisualsTab:AddToggle({
     Name = "Box Esp",
     Default = false,
     Callback = function(Value)
         espEnabled = Value
+        _G.espEnabled = Value
+
         if espEnabled then
-            if not espScript then
-                espScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Esp.lua'))()
-                espScript()
+            -- Enable Box ESP
+            local settings = {
+                defaultcolor = Color3.fromRGB(255, 0, 0),
+                teamcheck = false,
+                teamcolor = true
+            }
+
+            local runService = game:GetService("RunService")
+            local players = game:GetService("Players")
+
+            local localPlayer = players.LocalPlayer
+            local camera = workspace.CurrentCamera
+
+            local newVector2, newColor3, newDrawing = Vector2.new, Color3.new, Drawing.new
+            local tan, rad = math.tan, math.rad
+            local round = function(...) local a = {}; for i,v in next, table.pack(...) do a[i] = math.round(v); end return unpack(a); end
+            local wtvp = function(...) local a, b = camera.WorldToViewportPoint(camera, ...) return newVector2(a.X, a.Y), b, a.Z end
+
+            local function createEsp(player)
+                local drawings = {}
+                
+                drawings.box = newDrawing("Square")
+                drawings.box.Thickness = 1
+                drawings.box.Filled = false
+                drawings.box.Color = settings.defaultcolor
+                drawings.box.Visible = false
+                drawings.box.ZIndex = 2
+
+                drawings.boxoutline = newDrawing("Square")
+                drawings.boxoutline.Thickness = 3
+                drawings.boxoutline.Filled = false
+                drawings.boxoutline.Color = newColor3()
+                drawings.boxoutline.Visible = false
+                drawings.boxoutline.ZIndex = 1
+
+                espCache[player] = drawings
             end
+
+            local function removeEsp(player)
+                if rawget(espCache, player) then
+                    for _, drawing in next, espCache[player] do
+                        drawing:Remove()
+                    end
+                    espCache[player] = nil
+                end
+            end
+
+            local function updateEsp(player, esp)
+                if not _G.espEnabled then return end  -- Exit if the script is disabled
+
+                local character = player and player.Character
+                if character then
+                    local cframe = character:GetModelCFrame()
+                    local position, visible, depth = wtvp(cframe.Position)
+                    esp.box.Visible = visible
+                    esp.boxoutline.Visible = visible
+
+                    if cframe and visible then
+                        local scaleFactor = 1 / (depth * tan(rad(camera.FieldOfView / 2)) * 2) * 1000
+                        local width, height = round(4 * scaleFactor, 5 * scaleFactor)
+                        local x, y = round(position.X, position.Y)
+
+                        esp.box.Size = newVector2(width, height)
+                        esp.box.Position = newVector2(round(x - width / 2, y - height / 2))
+                        esp.box.Color = settings.teamcolor and player.TeamColor.Color or settings.defaultcolor
+
+                        esp.boxoutline.Size = esp.box.Size
+                        esp.boxoutline.Position = esp.box.Position
+                    end
+                else
+                    esp.box.Visible = false
+                    esp.boxoutline.Visible = false
+                end
+            end
+
+            for _, player in next, players:GetPlayers() do
+                if player ~= localPlayer then
+                    createEsp(player)
+                end
+            end
+
+            players.PlayerAdded:Connect(function(player)
+                createEsp(player)
+            end)
+
+            players.PlayerRemoving:Connect(function(player)
+                removeEsp(player)
+            end)
+
+            runService:BindToRenderStep("esp", Enum.RenderPriority.Camera.Value, function()
+                if not _G.espEnabled then return end  -- Exit if the script is disabled
+
+                for player, drawings in next, espCache do
+                    if settings.teamcheck and player.Team == localPlayer.Team then
+                        continue
+                    end
+
+                    if drawings and player ~= localPlayer then
+                        updateEsp(player, drawings)
+                    end
+                end
+            end)
         else
-            if espScript then
-                loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopEsp.lua'))()
-                espScript = nil
+            -- Disable Box ESP
+            game:GetService("RunService"):UnbindFromRenderStep("esp")
+            for player, drawings in next, espCache do
+                for _, drawing in next, drawings do
+                    drawing:Remove()
+                end
             end
+            espCache = {}
         end
-    end    
+    end
 })
 
 VisualsTab:AddToggle({
@@ -148,7 +252,7 @@ VisualsTab:AddToggle({
     end    
 })
 
-infoTab:AddLabel("Esp Toggle Of Bugs A Little Fix Soon")
+infoTab:AddLabel("Esp Toggle Off Bugs A Little, Fix Soon")
 
 LocalPlayerTab:AddSlider({
     Name = "Walk Speed",
@@ -185,3 +289,7 @@ LocalPlayerTab:AddSlider({
         end
     end    
 })
+
+-- Start the script with ESP and Chams disabled
+_G.espEnabled = false
+chamsEnabled = false
