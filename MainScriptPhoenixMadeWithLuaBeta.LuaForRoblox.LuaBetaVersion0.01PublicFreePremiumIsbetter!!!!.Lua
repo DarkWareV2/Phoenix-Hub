@@ -67,6 +67,9 @@ VisualsTab:AddToggle({
     end    
 })
 
+local namesEnabled = false
+local namesScript = nil
+
 VisualsTab:AddToggle({
     Name = "Chams",
     Default = false,
@@ -79,8 +82,22 @@ VisualsTab:AddToggle({
             end
         else
             if namesScript then
-                -- Execute code to disable or cleanup the Names script if it is running
-                -- Implement a similar cleanup mechanism for the Names script if necessary
+                -- Clean up the ESP markers
+                local function removeESP()
+                    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                        if player.Character then
+                            for _, part in pairs(player.Character:GetChildren()) do
+                                if part:IsA("Part") or part:IsA("MeshPart") then
+                                    local adornment = part:FindFirstChild("shit")
+                                    if adornment then
+                                        adornment:Destroy()
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                removeESP()
                 namesScript = nil
             end
         end
