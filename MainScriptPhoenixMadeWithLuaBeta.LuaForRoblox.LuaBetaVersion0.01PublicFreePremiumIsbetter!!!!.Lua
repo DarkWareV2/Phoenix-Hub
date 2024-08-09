@@ -1,4 +1,4 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
 
 local Window = OrionLib:MakeWindow({Name = "Phoenix Hub", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
@@ -9,17 +9,7 @@ local VisualsTab = Window:MakeTab({
 })
 
 local Section = VisualsTab:AddSection({
-    Name = "Visuals"
-})
-
-local infoTab = Window:MakeTab({
-    Name = "Info",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local Section = infoTab:AddSection({
-    Name = "Visuals Info"
+    Name = "Visuals Configuration"
 })
 
 local LocalPlayerTab = Window:MakeTab({
@@ -32,8 +22,30 @@ local LocalPlayerSection = LocalPlayerTab:AddSection({
     Name = "Humanoid"
 })
 
+local FpsTab = Window:MakeTab({
+    Name = "Fps Configuration",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local Section = FpsTab:AddSection({
+    Name = "Fps Boosters"
+})
+
+local infoTab = Window:MakeTab({
+    Name = "Info",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local Section = infoTab:AddSection({
+    Name = "Visuals Info"
+})
+
 local espEnabled = false
 local espScript = nil
+local namesEnabled = false
+local namesScript = nil
 
 VisualsTab:AddToggle({
     Name = "Box Esp",
@@ -42,24 +54,40 @@ VisualsTab:AddToggle({
         espEnabled = Value
         if espEnabled then
             if not espScript then
-                espScript = loadstring(game:HttpGet(('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Esp.lua')))()
-                espScript()
+                espScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Esp.lua'))()
+                espScript()  -- Execute the ESP script
             end
         else
-            loadstring(game:HttpGet(('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopEsp.lua')))()
-            espScript = nil
+            if espScript then
+                -- Execute code to disable the ESP script if it is running
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/StopEsp.lua'))()
+                espScript = nil
+            end
+        end
+    end    
+})
+
+VisualsTab:AddToggle({
+    Name = "Names",
+    Default = false,
+    Callback = function(Value)
+        namesEnabled = Value
+        if namesEnabled then
+            if not namesScript then
+                namesScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Names.Lua'))()
+                namesScript()  -- Execute the Names script
+            end
+        else
+            if namesScript then
+                -- Execute code to disable or cleanup the Names script if it is running
+                -- Implement a similar cleanup mechanism for the Names script if necessary
+                namesScript = nil
+            end
         end
     end    
 })
 
 infoTab:AddLabel("Esp Toggle Of Bugs A Little Fix Soon")
-
--- Helper function to get the player's Humanoid
-local function getHumanoid()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    return character:FindFirstChildOfClass("Humanoid")
-end
 
 LocalPlayerTab:AddSlider({
     Name = "Walk Speed",
@@ -70,7 +98,9 @@ LocalPlayerTab:AddSlider({
     Increment = 1,
     ValueName = "Speed",
     Callback = function(Value)
-        local humanoid = getHumanoid()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.WalkSpeed = Value
         end
@@ -81,14 +111,36 @@ LocalPlayerTab:AddSlider({
     Name = "Jump Power",
     Min = 0,
     Max = 300,
-    Default = getHumanoid() and getHumanoid().JumpPower or 50,  -- Default to current jump power or 50 if humanoid is not yet loaded
+    Default = (game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower) or 50,
     Color = Color3.fromRGB(255,255,255),
     Increment = 1,
     ValueName = "Power",
     Callback = function(Value)
-        local humanoid = getHumanoid()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid.JumpPower = Value
+        end
+    end    
+})
+
+VisualsTab:AddToggle({
+    Name = "Names",
+    Default = false,
+    Callback = function(Value)
+        namesEnabled = Value
+        if namesEnabled then
+            if not namesScript then
+                namesScript = loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkWareV2/Phoenix-Hub/main/Names.Lua'))()
+                namesScript()  -- Execute the Names script
+            end
+        else
+            if namesScript then
+                -- Execute code to disable or cleanup the Names script if it is running
+                -- Implement a similar cleanup mechanism for the Names script if necessary
+                namesScript = nil
+            end
         end
     end    
 })
