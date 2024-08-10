@@ -3,7 +3,7 @@ local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shle
 
 -- Create the main window
 local Window = OrionLib:MakeWindow({
-    Name = "Phoenix Hub Version 0.08 BETA Private",
+    Name = "Phoenix Hub Version 0.15 Beta Private",
     HidePremium = false,
     SaveConfig = true,
     ConfigFolder = "OrionTest"
@@ -12,7 +12,7 @@ local Window = OrionLib:MakeWindow({
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
     Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
+    PremiumOnly = true
 })
 
 local LocalPlayerTab = Window:MakeTab({
@@ -382,7 +382,7 @@ end
 
 -- Fly Toggle Button
 LocalPlayerTab:AddToggle({
-    Name = "Levitate/Air Stuck",
+    Name = "Levitate",
     Default = false,
     Callback = function(Value)
         if Value then
