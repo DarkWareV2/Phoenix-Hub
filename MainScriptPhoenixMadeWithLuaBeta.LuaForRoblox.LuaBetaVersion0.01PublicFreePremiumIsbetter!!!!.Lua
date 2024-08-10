@@ -253,41 +253,79 @@ LocalPlayerTab:AddSlider({
 -- Fly Feature
 local flying = false
 local bodyVelocity = Instance.new("BodyVelocity")
+local bodyGyro = Instance.new("BodyGyro")
 
-local function toggleFly()
+local function startFlying()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local camera = workspace.CurrentCamera
+    local userInputService = game:GetService("UserInputService")
 
-    if flying then
-        flying = false
-        if humanoidRootPart then
-            humanoidRootPart.Anchored = false
-            bodyVelocity.Parent = nil
-        end
-    else
-        flying = true
-        if humanoidRootPart then
-            humanoidRootPart.Anchored = true
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-            bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            bodyVelocity.Parent = humanoidRootPart
+    bodyVelocity.Parent = humanoidRootPart
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
 
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if flying and humanoidRootPart then
-                    local mousePos = game.Players.LocalPlayer:GetMouse().Hit.p
-                    local direction = (mousePos - humanoidRootPart.Position).unit
-                    bodyVelocity.Velocity = direction * flySpeed
-                end
-            end)
+    bodyGyro.Parent = humanoidRootPart
+    bodyGyro.CFrame = humanoidRootPart.CFrame
+    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+
+    local function updateFlying()
+        if flying then
+            local direction = Vector3.zero
+            if userInputService:IsKeyDown(Enum.KeyCode.W) then
+                direction = direction + camera.CFrame.LookVector
+            end
+            if userInputService:IsKeyDown(Enum.KeyCode.S) then
+                direction = direction - camera.CFrame.LookVector
+            end
+            if userInputService:IsKeyDown(Enum.KeyCode.A) then
+                direction = direction - camera.CFrame.RightVector
+            end
+            if userInputService:IsKeyDown(Enum.KeyCode.D) then
+                direction = direction + camera.CFrame.RightVector
+            end
+            if userInputService:IsKeyDown(Enum.KeyCode.Space) then
+                direction = direction + Vector3.new(0, 1, 0)
+            end
+            if userInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                direction = direction - Vector3.new(0, 1, 0)
+            end
+
+            bodyVelocity.Velocity = direction.Unit * flySpeed
+            bodyGyro.CFrame = CFrame.new(humanoidRootPart.Position, camera.CFrame.Position)
         end
     end
+
+    local connection
+    connection = game:GetService("RunService").RenderStepped:Connect(function()
+        if flying then
+            updateFlying()
+        else
+            connection:Disconnect()
+            bodyVelocity:Destroy()
+            bodyGyro:Destroy()
+        end
+    end)
 end
 
-LocalPlayerTab:AddButton({
-    Name = "Toggle Fly",
-    Callback = toggleFly
+LocalPlayerTab:AddToggle({
+    Name = "Fly",
+    Default = false,
+    Callback = function(Value)
+        flying = Value
+        if flying then
+            startFlying()
+        else
+            bodyVelocity:Destroy()
+            bodyGyro:Destroy()
+        end
+    end    
 })
+
+-- Info Tab
+InfoTab:AddLabel("Phoenix Hub Version 0.18")
+InfoTab:AddLabel("Developed by YourName")
 
 -- MiTab
 MiTab:AddButton({
@@ -296,10 +334,6 @@ MiTab:AddButton({
         print("Sample button pressed")
     end
 })
-
--- Info Tab
-InfoTab:AddLabel("Phoenix Hub Version 0.18")
-InfoTab:AddLabel("Developed by Fire Official")
 
 -- Save and Load Config
 OrionLib:MakeNotification({
