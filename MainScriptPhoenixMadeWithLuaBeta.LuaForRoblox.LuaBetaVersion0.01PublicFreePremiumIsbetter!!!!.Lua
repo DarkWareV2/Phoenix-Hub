@@ -3,61 +3,47 @@ local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shle
 
 -- Create the main window
 local Window = OrionLib:MakeWindow({
-    Name = "Phoenix Hub Version 0.12 Beta Testing Private", 
-    HidePremium = false, 
-    SaveConfig = true, 
+    Name = "Phoenix Hub Version 0.08 BETA Private",
+    HidePremium = false,
+    SaveConfig = true,
     ConfigFolder = "OrionTest"
 })
 
--- Visuals Tab
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local visualsSection = VisualsTab:AddSection({
-    Name = "Visuals Configuration"
-})
-
--- Local Player Tab
 local LocalPlayerTab = Window:MakeTab({
     Name = "Local Player",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local localPlayerSection = LocalPlayerTab:AddSection({
-    Name = "Humanoid"
-})
-
--- FPS Tab
 local FpsTab = Window:MakeTab({
     Name = "Fps Configuration",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local fpsSection = FpsTab:AddSection({
-    Name = "Fps Boosters"
-})
-
--- Info Tab
-local infoTab = Window:MakeTab({
+local InfoTab = Window:MakeTab({
     Name = "Info",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
 })
 
-local infoSection = infoTab:AddSection({
-    Name = "Visuals Info"
-})
-
--- ESP Configuration
+-- Variables for ESP
 local espEnabled = false
 local chamsEnabled = false
 local espCache = {}
 
+-- Variables for Flying
+local flying = false
+local flySpeed = 50 -- Adjust speed as needed
+local bodyGyro, bodyVelocity
+
+-- ESP Configuration
 VisualsTab:AddToggle({
     Name = "Box Esp",
     Default = false,
@@ -282,7 +268,7 @@ LocalPlayerTab:AddSlider({
     Name = "Jump Power",
     Min = 0,
     Max = 300,
-    Default = (game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower) or 50,
+    Default = 50,
     Color = Color3.fromRGB(255, 255, 255),
     Increment = 1,
     ValueName = "Power",
@@ -296,85 +282,143 @@ LocalPlayerTab:AddSlider({
     end    
 })
 
--- Fly Configuration
-local flyEnabled = false
-local flySpeed = 50
-local flyKey = Enum.KeyCode.Space
-local bodyVelocity, bodyGyro, character, humanoidRootPart
+-- Remove Textures Button
+FpsTab:AddButton({
+    Name = "Remove Textures",
+    Callback = function()
+        print("button pressed")
 
+        local function removeTextures(object)
+            if object:IsA("BasePart") then
+                for _, child in pairs(object:GetChildren()) do
+                    if child:IsA("Texture") or child:IsA("Decal") then
+                        child:Destroy()
+                    end
+                end
+            end
+        end
+
+        local function onCharacterAdded(character)
+            for _, part in pairs(character:GetDescendants()) do
+                removeTextures(part)
+            end
+        end
+
+        local Players = game:GetService("Players")
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                onCharacterAdded(player.Character)
+            end
+        end
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(onCharacterAdded)
+        end)
+    end    
+})
+
+-- Function to Start Flying
+local function startFlying()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid.PlatformStand = true
+    flying = true
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.CFrame = hrp.CFrame
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.P = 9e5
+    bodyGyro.Parent = hrp
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.Parent = hrp
+
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if flying then
+            local direction = Vector3.zero
+            local camera = workspace.CurrentCamera
+
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+                direction = direction + camera.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+                direction = direction - camera.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+                direction = direction - camera.CFrame.RightVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+                direction = direction + camera.CFrame.RightVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.E) then
+                direction = direction + Vector3.new(0, 1, 0) -- Move Up
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Q) then
+                direction = direction - Vector3.new(0, 1, 0) -- Move Down
+            end
+
+            bodyVelocity.Velocity = direction * flySpeed
+            bodyGyro.CFrame = camera.CFrame
+        end
+    end)
+end
+
+-- Function to Stop Flying
+local function stopFlying()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    humanoid.PlatformStand = false
+    flying = false
+
+    if bodyGyro then bodyGyro:Destroy() end
+    if bodyVelocity then bodyVelocity:Destroy() end
+end
+
+-- Fly Toggle Button
 LocalPlayerTab:AddToggle({
-    Name = "Levitate/air fling",
+    Name = "Levitate/Air Stuck",
     Default = false,
     Callback = function(Value)
-        flyEnabled = Value
-        if flyEnabled then
-            local player = game.Players.LocalPlayer
-            character = player.Character or player.CharacterAdded:Wait()
-            humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-            bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.Parent = humanoidRootPart
-            bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-            bodyVelocity.Velocity = Vector3.zero
-
-            bodyGyro = Instance.new("BodyGyro")
-            bodyGyro.Parent = humanoidRootPart
-            bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
-            bodyGyro.CFrame = humanoidRootPart.CFrame
-
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if flyEnabled and character and character.Parent then
-                    local moveDirection = Vector3.zero
-                    if flyKey == Enum.KeyCode.Space then
-                        moveDirection = Vector3.new(0, flySpeed, 0)
-                    end
-                    bodyVelocity.Velocity = moveDirection
-                    bodyGyro.CFrame = humanoidRootPart.CFrame
-                end
-            end)
+        if Value then
+            startFlying()
         else
-            if bodyVelocity then bodyVelocity:Destroy() end
-            if bodyGyro then bodyGyro:Destroy() end
-            flyEnabled = false
+            stopFlying()
         end
     end
 })
 
--- Slider for Fly Speed
+-- Speed Slider
 LocalPlayerTab:AddSlider({
     Name = "Fly Speed",
-    Min = 0,
-    Max = 100,
+    Min = 10,
+    Max = 300,
     Default = 50,
     Color = Color3.fromRGB(255, 255, 255),
     Increment = 1,
     ValueName = "Speed",
     Callback = function(Value)
         flySpeed = Value
-    end    
+    end
 })
 
--- Info Section Update
-infoSection:AddLabel("Phoenix Hub - Version 0.08")
-infoSection:AddLabel("Chams, ESP, Fly, and FPS Boost features included.")
-infoSection:AddLabel("Use the GUI to toggle and configure functionalities.")
-
-local MiTab = Window:MakeTab({
-	Name = "Mi Aio Only",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-local TeleportService = game:GetService("TeleportService")
-local placeId = 18860278129
-
-MiTab:AddButton({
-    Name = "wave key daily!!!! Works + 10000 robux every second!!??!?!",
+-- Info Button
+InfoTab:AddButton({
+    Name = "Join our Discord!",
     Callback = function()
-        print("sigma??????!!!?!?!?!?!")
-	wait(1)
-        TeleportService:Teleport(placeId, game.Players.LocalPlayer)
-    end    
+        setclipboard("https://discord.gg/YourServerInvite") -- Replace with your actual Discord invite link
+        OrionLib:MakeNotification({
+            Name = "Discord Link Copied!",
+            Content = "The Discord link has been copied to your clipboard.",
+            Image = "rbxassetid://4483345998",
+            Time = 5
+        })
+    end
 })
 
 OrionLib:Init()
